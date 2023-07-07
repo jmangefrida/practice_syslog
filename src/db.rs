@@ -1,6 +1,6 @@
 use scylla::{IntoTypedRows, Session, SessionBuilder};
-use uuid::Uuid;
-use syslog_loose::Message;
+//use uuid::Uuid;
+//use syslog_loose::Message;
 use crate::log_event;
 use crate::result::Result;
 use scylla::FromRow;
