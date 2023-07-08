@@ -7,6 +7,7 @@ use crate::result::Result;
 use std::str;
 use std::time::SystemTime;
 use crate::db;
+use crate::log_parser;
 
 pub struct SyslogListener {
     pub db_uri: String,
@@ -33,9 +34,9 @@ impl SyslogListener {
                                                 tag: "".to_string(),
                                                 msg: original.to_string() };
             
-            
-            db::add_event(&session, event).await?;
-            //println!("{}", msg);
+            //println!("{}", event.msg);
+            db::add_event(&session, &event).await?;
+            log_parser::parse_syslog(event);
 
             //let msg = str::from_utf8(&buf[0..data_read]).unwrap().parse::<SyslogMessage>().unwrap();
             //println!("{:?} {:?} {:?} {:?}", msg.facility, msg.severity, msg.hostname, msg.msg);

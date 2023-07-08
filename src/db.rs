@@ -58,7 +58,7 @@ pub async fn create_table_log(session: &Session) -> Result<()> {
     .map_err(From::from)
 }
 
-pub async fn add_event(session: &Session, msg: log_event::LogEvent) -> Result<()> {
+pub async fn add_event(session: &Session, msg: &log_event::LogEvent) -> Result<()> {
     session
     .query(ADD_EVENT_QUERY, msg)
     .await
