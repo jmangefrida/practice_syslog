@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::net::UdpSocket;
 use scylla::Session;
 use crate::log_event;
@@ -36,7 +37,9 @@ impl SyslogListener {
             
             //println!("{}", event.msg);
             db::add_event(&session, &event).await?;
-            log_parser::parse_syslog(event);
+            let mut analyzed_event = log_event::AnalyzedEvent {event: event, data :HashMap::new()};
+            analyzed_event.parse();
+            //log_parser::parse_syslog(event);
 
             //let msg = str::from_utf8(&buf[0..data_read]).unwrap().parse::<SyslogMessage>().unwrap();
             //println!("{:?} {:?} {:?} {:?}", msg.facility, msg.severity, msg.hostname, msg.msg);
