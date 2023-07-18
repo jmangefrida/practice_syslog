@@ -35,9 +35,9 @@ impl SyslogListener {
                                                 tag: "".to_string(),
                                                 msg: original.to_string() };
             
-            //println!("{}", event.msg);
+            println!("{}", event.msg);
             db::add_event(&session, &event).await?;
-            let mut analyzed_event = log_event::AnalyzedEvent {event: event, data :HashMap::new()};
+            let mut analyzed_event = log_event::AnalyzedEvent {event: event, data :HashMap::new(), log_type: log_event::LogType::SYSLOG5424};
             analyzed_event.parse();
             //log_parser::parse_syslog(event);
 

@@ -22,7 +22,7 @@ mod log_parser;
 #[tokio::main]
 async fn main() -> Result<()> {
     let db_uri = std::env::var("SCYLLA_URI").unwrap_or_else(|_| "192.168.122.206:9042".to_string());
-    let sock_uri: String = "127.0.0.1:10514".to_string();
+    let sock_uri: String = "192.168.1.50:10514".to_string();
     let listener = ingest::SyslogListener{db_uri, sock_uri};
     
     let handle = thread::spawn(move || {

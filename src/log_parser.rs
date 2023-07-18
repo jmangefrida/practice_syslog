@@ -6,7 +6,7 @@ use std::str;
 
 pub fn parse_syslog(event: log_event::LogEvent) -> log_event::AnalyzedEvent {
     println!("{}", &event.msg);
-    let mut analyzed_event = log_event::AnalyzedEvent{event: event, data: HashMap::new()};
+    let mut analyzed_event = log_event::AnalyzedEvent{event: event, data: HashMap::new(), log_type: log_event::LogType::SYSLOG5424};
     let mut ptr = extract_pri(&mut analyzed_event);
     return analyzed_event;
 }

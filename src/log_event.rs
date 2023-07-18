@@ -3,7 +3,11 @@ use crate::duration::Duration;
 //use scylla::FromRow;
 use scylla::ValueList;
 use std::collections::HashMap;
+use std::os::unix::process;
 use serde_json::{Result, Value};
+use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime};
+use chrono::format::ParseError;
+use regex::Regex;
 
 #[derive(Debug)]
 #[non_exhaustive]
@@ -51,6 +55,21 @@ pub enum Severity {
     DEBUG = 7
 }
 
+const MONTHS: [&str; 12] = [
+    "JAN",
+    "FEB",
+    "Mar",
+    "Apr",
+    "MAY",
+    "JUN",
+    "JUL",
+    "AUG",
+    "SEP",
+    "OCT",
+    "NOV",
+    "DEC",
+    ];
+
 
 
 
@@ -66,15 +85,22 @@ pub struct LogEvent {
 
 pub struct AnalyzedEvent{
     pub event: LogEvent,
-    pub data: HashMap<String, String>
+    pub data: HashMap<String, String>,
+    pub log_type: LogType
 }
 
 impl AnalyzedEvent {
     pub fn parse(mut self) {
         let mut ptr: usize = 0;
+        let is_ascii = self.event.msg.is_ascii();
         ptr = self.extract_pri();
-        ptr = self.extract_date(ptr);
-        println!("{}", ptr);
+        ptr = self.extract_version(ptr);
+        ptr = self.extract_date_time(ptr);
+        ptr = self.extract_hostname(ptr);
+        //ptr = self.extract_process(ptr);
+        
+        //println!("{:?}", self.data);
+        
     }
 
     pub fn extract_pri(&mut self) -> usize {
@@ -91,12 +117,15 @@ impl AnalyzedEvent {
             if ptr > 0 {
                 let pri: i32  = self.event.msg["<".len()..ptr].parse().unwrap();
                 self.decode_pri(pri);
-                println!("{},{}", self.data["facility"], self.data["severity"]);
+                //println!("{},{}", self.data["facility"], self.data["severity"]);
             }
             
+            return ptr + 1;
         }
 
-        ptr
+        return 0;
+
+        
     }
 
 
@@ -109,8 +138,79 @@ impl AnalyzedEvent {
 
     }
 
-    pub fn extract_date(&mut self, mut ptr: usize) -> usize {
-       self.event.msg.is_ascii();
-        ptr
+    pub fn extract_version(&mut self, mut ptr: usize) -> usize {
+        let version: String = self.event.msg[ptr..ptr+1].parse().unwrap();
+        if version == "1" {
+            self.data.insert("syslog_version".to_string(), "1".to_string());
+            ptr += 2;
+            return ptr;
+        } else {
+            self.data.insert("syslog_version".to_string(), "0".to_string());
+        }
+        return ptr;
+    }
+    
+    pub fn extract_date_time(&mut self, mut ptr: usize) -> usize {
+
+        //let sub_msg : String = self.event.msg[ptr..].parse().unwrap();
+        let mut sub_msg: String;
+        let mut end_ptr: usize;
+        if self.data["syslog_version"] == "1"{
+
+            end_ptr = ptr + 25;
+            sub_msg = self.event.msg[ptr..end_ptr].parse().unwrap();
+            //let date_time = DateTime::parse_from_rfc3339(&sub_msg).unwrap();
+            
+        } else {
+            end_ptr = ptr + 15;
+            sub_msg = self.event.msg[ptr..end_ptr].parse().unwrap();
+            //let date_time = DateTime::parse_from_str(&sub_msg, "%b %d %H:%M:%S");
+        }
+        self.data.insert("event_time".to_string(), sub_msg.clone());
+        //println!("{}", sub_msg);
+        if MONTHS.contains(&sub_msg.as_str()){
+
+        }
+        end_ptr + 1
+    }
+
+    pub fn extract_hostname(&mut self, mut ptr: usize) -> usize {
+        let sub_msg: String = self.event.msg[ptr..].parse().unwrap();
+        let end_ptr: usize = sub_msg.find(" ").unwrap() + ptr;
+        let hostname: String = self.event.msg[ptr..end_ptr].parse().unwrap();
+
+        self.data.insert("hostname".to_string(), hostname.clone());
+
+        end_ptr + 1
+    }
+
+    pub fn extract_process(&mut self, mut ptr: usize) -> usize {
+        let mut sub_msg: String = self.event.msg[ptr..].parse().unwrap();
+        let find_result = sub_msg.find(char::is_alphanumeric);
+        let ptr_padding = match find_result {
+            Some(n) => n,
+            None => 0
+        };
+        if ptr_padding == 0 {
+            return ptr
+        }
+        sub_msg = sub_msg[ptr_padding..].parse().unwrap();
+        //sub_msg = sub_msg.trim().to_string();
+        let end_ptr: usize = sub_msg.find(" ").unwrap() + ptr + ptr_padding;
+        let process: String = self.event.msg[ptr..end_ptr].parse().unwrap();
+        let ptr_id = sub_msg.find("[");
+        let process_id =  match ptr_id {
+            Some(n) => n,
+            None => 0
+        };
+        if process_id > 0 && process.len() > 1 {
+            self.data.insert("process_id".to_string(), process[process_id+1..process.len()-2].parse().unwrap());
+            self.data.insert("process".to_string(), process[0..process_id].parse().unwrap());
+        } else {
+            self.data.insert("process".to_string(), process);
+        }
+
+        end_ptr
+
     }
 }
