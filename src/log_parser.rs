@@ -1,8 +1,18 @@
+//Parser reads config files with regular expressions for each type of log source.
+//When an event is passed in, it is tagged with a type, that type is matched against regex definitions read it from the config files.
+//A seperate parser is created for each definiion.  parsers are in a tree format, the message is passed into the root, partially decoded
+//and then passed up the tree based on values parsed in the current level.
+
+
 use crate::log_event;
 use std::collections::HashMap;
 use serde_json::{Result, Value};
 use std::str;
 
+pub struct Parser {
+    pub log_type: log_event::LogType,
+    pub definition_group HashMap
+}
 
 pub fn parse_syslog(event: log_event::LogEvent) -> log_event::AnalyzedEvent {
     println!("{}", &event.msg);
@@ -10,39 +20,3 @@ pub fn parse_syslog(event: log_event::LogEvent) -> log_event::AnalyzedEvent {
     let mut ptr = extract_pri(&mut analyzed_event);
     return analyzed_event;
 }
-
-fn extract_pri(event: &mut log_event::AnalyzedEvent) -> usize {
-    
-    let mut ptr: usize = 0;
-
-    if event.event.msg.starts_with("<") {
-        let end = event.event.msg.find(">");
-        ptr = match end {
-            Some(n) => n,
-            None => 0   
-        };
-
-
-        if ptr > 0 {
-            let pri: i32  = event.event.msg["<".len()..ptr].parse().unwrap();
-            let codes = decode_pri(pri);
-            event.data.insert("facility".to_string(), codes.0.to_string());
-            event.data.insert("severity".to_string(), codes.1.to_string());
-            println!("{},{}", codes.0, codes.1);
-        }
-        
-
-    }
-
-    //event.data.get_mut("pri").get_or_insert(&mut "value".to_string());
-    ptr
-
-}
-
-fn decode_pri(pri: i32) -> (i32, i32) {
-    //let logtype = log_event::LogType::JSON;
-    let facility: i32 = pri / 8;
-    let severity: i32 = pri % 8;
-    (facility, severity)
-}
-
