@@ -9,6 +9,7 @@ use std::str;
 use std::time::SystemTime;
 use crate::db;
 use crate::log_parser;
+//use crate::filter;
 
 pub struct SyslogListener {
     pub db_uri: String,
