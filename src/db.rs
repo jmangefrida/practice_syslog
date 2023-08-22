@@ -1,10 +1,11 @@
-use scylla::{IntoTypedRows, Session, SessionBuilder};
+use scylla::{Session, SessionBuilder};
 //use uuid::Uuid;
 //use syslog_loose::Message;
 use crate::log_event;
 use crate::result::Result;
-use scylla::FromRow;
-use scylla::ValueList;
+//use scylla::FromRow;
+//use scylla::ValueList;
+//use scylla::IntoTypedRows;
 
 
 static CREATE_KEYSPACE_QUERY: &str = r#"
@@ -22,14 +23,17 @@ static CREATE_LOG_TABLE_QUERY: &str = r#"
         source text,
         tag text,
         msg TEXT,
+        data map<text, text>,
+        log_type text,
         PRIMARY KEY(id, ingest_time, source, tag)
 
     );
 "#;
 
+
 static ADD_EVENT_QUERY: &str = r#"
-    INSERT INTO logs.event (id, ingest_time, source, tag, msg)
-    VALUES (?, ?, ?, ?, ?);
+    INSERT INTO logs.event (id, ingest_time, source, tag, msg, data, log_type)
+    VALUES (?, ?, ?, ?, ?, ?, ?);
 "#;
 
 

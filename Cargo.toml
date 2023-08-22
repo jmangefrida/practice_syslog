@@ -6,11 +6,16 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+syn = "2.0.28"
 # syslog_rfc5424 = "0.9.0"
 # syslog_loose = "0.18.0"
-scylla = "0.3.1"
+#scylla = "0.3.1"
+scylla = "*"
 uuid = {version = "0.8", features = ["v4"]}
 tokio = {version = "1.1.0", features = ["full"]}
 chrono = "0.4.26"
 serde_json = "1.0"
-regex = "1.9.1"
+regex = "1.9.3"
+#serde = { version = "1.0", features = ["derive"] }
+serde = { version = "*", features = ["derive"] }
+serde_regex = "1.1.0"

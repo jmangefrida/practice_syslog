@@ -3,18 +3,19 @@ use crate::duration::Duration;
 //use scylla::FromRow;
 use scylla::ValueList;
 use std::collections::HashMap;
-use std::os::unix::process;
-use serde_json::{Result, Value};
-use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime};
-use chrono::format::ParseError;
-use regex::Regex;
+//use std::os::unix::process;
+//use serde_json::{Result, Value};
+//use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime};
+//use chrono::format::ParseError;
+//use regex::Regex;
 
 #[derive(Debug)]
 #[non_exhaustive]
 pub enum LogType {
     JSON = 0,
     SYSLOG3164 = 1,
-    SYSLOG5424 = 2
+    SYSLOG5424 = 2,
+    UNKNOWN = 3
 }
 
 pub enum Facitlity {
@@ -79,10 +80,11 @@ pub struct LogEvent {
     pub ingest_time: Duration,
     pub source: String,
     pub tag: String,
-    pub msg: String
+    pub msg: String,
+    pub data: HashMap<String, String>,
+    pub log_type: String
 
 }
-
 pub struct AnalyzedEvent{
     pub event: LogEvent,
     pub data: HashMap<String, String>,

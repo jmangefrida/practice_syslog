@@ -1,0 +1,8 @@
+{  
+    "ingesters": [
+        {"bind_addr": "192.168.1.50:10514", "parser": "OPENSENSE", "tags":["syslog"] },
+        {"bind_addr": "192.168.1.50:10515", "parser": "OPENSENSE", "tags":["syslog-2"] }
+    ],
+    "db_uri": "192.168.122.129",
+    "parsers": ["OPENSENSE"] 
+}
