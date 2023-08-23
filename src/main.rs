@@ -24,10 +24,7 @@ use crate::config::Config;
 
 //#[tokio::main]
  fn main() -> Result<()> {
-    //let flut_config: config::Config = config::Config::build().expect("Error: Could not read config");
-    //let tester = flut_config.bind_ip;
-    //let db_uri = std::env::var("SCYLLA_URI").unwrap_or_else(|_| "192.168.122.206:9042".to_string());
-    //let sock_uri: String = "192.168.1.50:10514".to_string();
+
     let config: Config = Config::build();
     let parsers = config.clone().build_parsers();
     /*let config: Value = match config::read_config() {

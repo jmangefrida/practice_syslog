@@ -4,7 +4,7 @@
     "parsers": [
         {
             "name": "SYSLOG_OPNSENSE",
-            "expression": "<(?P<PRI>\\d+)>1 (?P<DATETIME>\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(-\\d{2}:\\d{2})?) (?P<HOSTNAME>\\S+) \\(?(?P<PROCESS>\\w+(\\.\\w+)?-?\\d?)\\)? (?P<PROCESS_ID>\\d+) - \\[meta sequenceId=\\W(?P<SEQUENCED_ID>\\d+)\\W]",
+            "expression": "(?P<PRI><\\d+>)1 (?P<DATETIME>\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(-\\d{2}:\\d{2})?) (?P<HOSTNAME>\\S+) \\(?(?P<PROCESS>\\w+(\\.\\w+)?-?\\d?)\\)? (?P<PROCESS_ID>\\d+) - \\[meta sequenceId=\\W(?P<SEQUENCED_ID>\\d+)\\W]",
             "decision": "PROCESS",
             "branches": [
                 {"value": "unbound", "value_type": "string", "name": "SYSLOG_OPNSENSE_UNBOUND"},
@@ -16,27 +16,27 @@
         },
         {
             "name": "SYSLOG_OPNSENSE_UNBOUND",
-            "expression": "\\[\\d+:\\d] (?P<ACTION>\\w+):(?P<MSG>.+)",
+            "expression": " .+] \\[\\d+:\\d] (?P<ACTION>\\w+):(?P<MSG>.+)",
             "decision": "",
             "branches":[]    
         },
         {
             "name": "SYSLOG_OPNSENSE_SQUID",
-            "expression": "(?P<REQUEST_TIMESTAMP>\\d+\\.\\d+)\\s+(?P<PROCESSING_TIME>\\d+) (?P<CLIENT_IP>\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}) (?P<CACHE_RESULT>\\w+/\\d+) (?P<RESPONSE_LENGTH>\\d+) (?P<REQUEST_METHOD>\\w+) (?P<REQUEST_URL>\\S+) (?P<USER>\\S) (?P<PROXY_ROUTE>\\S+) (?P<RESPONSE_CONTENT_TYPE>\\S+)",
+            "expression": ".+] (?P<REQUEST_TIMESTAMP>\\d+\\.\\d+)\\s+(?P<PROCESSING_TIME>\\d+) (?P<CLIENT_IP>\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}) (?P<CACHE_RESULT>\\w+/\\d+) (?P<RESPONSE_LENGTH>\\d+) (?P<REQUEST_METHOD>\\w+) (?P<REQUEST_URL>\\S+) (?P<USER>\\S) (?P<PROXY_ROUTE>\\S+) (?P<RESPONSE_CONTENT_TYPE>\\S+)",
             "decision": "",
             "branches": []
 
         },
         {
             "name": "SYSLOG_OPNSENSE_CONFIG",
-            "expression": "\\[(?P<GUID>.+)\\](?P<MGS>.+)",
+            "expression": ".+] \\[(?P<GUID>.+)\\](?P<MGS>.+)",
             "decision": "",
             "branches": []
 
         },
         {
             "name": "SYSLOG_OPNSENSE_FILTERLOG",
-            "expression": "(?P<UNKOWN_1>\\d+),,,(?P<RULE>\\w+),(?P<INPUT_INTERFACE>\\w+),(?P<REASON>\\w+),(?P<ACTION>\\w+),(?P<DIRECTION>\\w+),(?P<IP_VERSION>4|6)",
+            "expression": ".+] (?P<UNKOWN_1>\\d+),,,(?P<RULE>\\w+),(?P<INPUT_INTERFACE>\\w+),(?P<REASON>\\w+),(?P<ACTION>\\w+),(?P<DIRECTION>\\w+),(?P<IP_VERSION>4|6)",
             "decision": "IP_VERSION",
             "branches": [
                 {"value": "4", "value_type": "int", "name": "SYSLOG_OPNSENSE_FILTERLOG_4"}
@@ -45,7 +45,7 @@
         },
         {
             "name": "SYSLOG_OPNSENSE_FILTERLOG_4",
-            "expression": ",(?P<UNKNOWN_2>\\w+),(P?<UNKNOWN_3>\\w?)?,(?P<TTL>\\d+),(?P<SIZE_1>\\d+),(?P<UNKNOWN_3>\\d+),(?P<UNKNOWN_4>\\w+),(?P<PROTOCOL_ID>\\d+),(?P<PROTOCOL>\\w+),(?P<SIZE>\\d+),(?P<SRC_IP>\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}),(?P<DST_IP>\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}),(?P<SIZE_2>\\d+),(?P<DST_PORT>\\d+),(?P<SRC_PORT>\\d+)74",
+            "expression": ".+,4,(?P<UNKNOWN_2>\\w+),(P?<UNKNOWN_3>\\w?)?,(?P<TTL>\\d+),(?P<SIZE_1>\\d+),(?P<UNKNOWN_3>\\d+),(?P<UNKNOWN_4>\\w+),(?P<PROTOCOL_ID>\\d+),(?P<PROTOCOL>\\w+),(?P<SIZE>\\d+),(?P<SRC_IP>\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}),(?P<DST_IP>\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}),(?P<SIZE_2>\\d+),(?P<DST_PORT>\\d+),(?P<SRC_PORT>\\d+)74",
             "decision": "",
             "branches":[]
         }

@@ -50,6 +50,7 @@ pub struct Parser {
 impl Parser {
     pub fn parse(self, parser_coll:&ParserCollection, msg: &String) -> HashMap<String,String> {
         //print!("Running match {}", self.name);
+        let mut curser: usize = 0;
         let mut values = HashMap::new();
         let mut names = self.expression.capture_names();
         let Some(caps) = self.expression.captures(&msg) else {
@@ -60,7 +61,10 @@ impl Parser {
         for cap in caps.iter() {
             //println!("{:?}-{:?}",names.next().unwrap(), cap.unwrap_or(""));
             match names.next().unwrap() {
-                Some(na) => {values.insert(na.to_string(), cap.unwrap().as_str().to_string())},
+                Some(na) => {
+                    curser = cap.unwrap().end();
+                    values.insert(na.to_string(), cap.unwrap().as_str().to_string())
+                },
                 None => Some(String::new())
             };
 
@@ -71,7 +75,7 @@ impl Parser {
                     for parser in &parser_coll.parsers {
                         if parser.name == branch.name {
 
-                            values.extend(parser.clone().parse(parser_coll, msg));
+                            values.extend(parser.clone().parse(parser_coll, &msg[curser..].to_string()));
                             return values
                         }
                     }

@@ -34,9 +34,7 @@ pub struct Config {
 
     pub fn build() -> Config {
         let values: String = read_config();
-        let config: Config = serde_json::from_str(&values).unwrap();
-
-
+        let config: Config = serde_json::from_str(&values).expect("Invalid config file format.");
 
         config
     }
@@ -58,7 +56,7 @@ pub fn read_config() -> String {
     //let config: Value = serde_json::from_reader(reader).unwrap();
     //println!("{}", config["db_uri"].as_str().unwrap());
     //println!("{}", config["listener"].to_string());
-    let contents: String = fs::read_to_string("config/flut.json").unwrap();
+    let contents: String = fs::read_to_string("config/flut.json").expect("Could not open config file.");
     println!("File opened");
     //let config = serde_json::from_str(&contents).unwrap();
     //let lines = contents.lines().collect::<Vec<&str>>();
