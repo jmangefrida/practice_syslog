@@ -1,4 +1,5 @@
 //use std::collections::HashMap;
+//use std::collections::HashMap;
 use std::net::UdpSocket;
 use scylla::Session;
 use crate::log_event;
@@ -11,6 +12,8 @@ use crate::db;
 use crate::parser;
 //use crate::filter;
 use std::time;
+use crate::pool;
+//use pool::ThreadPool;
 
 #[derive(Clone)]
 pub struct SyslogListener {
@@ -27,6 +30,7 @@ impl SyslogListener {
         let s = UdpSocket::bind(&self.sock_uri).unwrap();
         let mut buf = [0u8; 2048];
         let session: Session = self.initialize_db().await.expect("Error connecting to database.");
+        let pool = pool::ThreadPool::new(4);
 
         
         loop {
@@ -34,26 +38,43 @@ impl SyslogListener {
             let (data_read, src_address) = s.recv_from(&mut buf).unwrap();
             let original = str::from_utf8(&buf[0..data_read]).unwrap();
             //let msg:  Message<&str> = syslog_loose::parse_message(original);
-            let id = Uuid::new_v4();
+            //let id = Uuid::new_v4();
             let start = time::Instant::now();
-            let event: log_event::LogEvent = log_event::LogEvent { 
-                                                id: id,
-                                                ingest_time: Duration::seconds(SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64),
-                                                source: src_address.to_string(),
-                                                tag: "".to_string(),
-                                                msg: original.to_string(),
-                                                data: self.parser.clone().parse(original.to_string()),
-                                                log_type: self.parser.name.clone() };
-            
-            //println!("{}", event.msg);
-            //let mut analyzed_event = self.parser.clone().parse(event);
-            //db::add_event(&session, &analyzed_event).await?;
-            db::add_event(&session, &event).await.expect("DB Error");
+            pool.execute(|| {
+                SyslogListener::create_event(src_address.to_string(), "".to_string(), original.to_string(), self.parser.clone());
+                    
+            });
+            //let event: log_event::LogEvent = log_event::LogEvent { 
+            //                                    id: id,
+            //                                    ingest_time: Duration::seconds(SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64),
+            //                                    source: src_address.to_string(),
+            //                                    tag: "".to_string(),
+            //                                    msg: original.to_string(),
+            //                                    data: self.parser.clone().parse(original.to_string()),
+            //                                    log_type: self.parser.name.clone() };
+            //
+            //   //println!("{}", event.msg);
+            //   //let mut analyzed_event = self.parser.clone().parse(event);
+            //   //db::add_event(&session, &analyzed_event).await?;
+            //db::add_event(&session, &event).await.expect("DB Error");
             let tduration = start.elapsed();
             println!("timing:{:?}", tduration);
-            println!("{:?}", event.data);
+            //println!("{:?}", event.data);
 
         }
+    }
+
+    pub fn create_event(src_address: String, tag: String, original: String, parser: parser::ParserCollection) -> log_event::LogEvent {
+        let id = Uuid::new_v4();
+        let event: log_event::LogEvent = log_event::LogEvent { 
+            id: id,
+            ingest_time: Duration::seconds(SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64),
+            source: src_address.to_string(),
+            tag: "".to_string(),
+            msg: original.to_string(),
+            data: parser.clone().parse(original.to_string()),
+            log_type: parser.name.clone() };
+        return event;
     }
 
     pub async fn initialize_db(&self) -> Result<Session> {
