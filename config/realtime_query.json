@@ -1,0 +1,5 @@
+{
+    "queries":[
+        ["PRI = 134 AND ACTION = pass AND IP_VERSION=4 AND (HOSTNAME=cerberus.localdomain OR HOSTNAME=cerberus.localdomain)", "ALERT('message')"]
+    ]
+}

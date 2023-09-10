@@ -7,6 +7,7 @@ use serde_json;
 use serde::{Serialize, Deserialize};
 
 use crate::parser::ParserCollection;
+use crate::query;
 //use regex::Error;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -14,14 +15,16 @@ use crate::parser::ParserCollection;
 pub struct Ingester{
     pub bind_addr: String,
     pub parser: String,
-    pub tags: Vec<String>
+    pub tags: Vec<String>,
+    pub threads: usize
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Config {
     pub db_uri: String,
     pub ingesters: Vec<Ingester>,
-    pub parsers: Vec<String>
+    pub parsers: Vec<String>,
+    pub queries: Vec<(String, query::ACTION)>
 
 }
  impl Config {
@@ -75,6 +78,10 @@ pub fn read_config() -> String {
 pub fn read_parser(filter: &str) -> ParserCollection {
     let contents: String = fs::read_to_string("config/".to_string() + filter.clone() + ".json").unwrap();
     let parser: ParserCollection = serde_json::from_str(&contents).unwrap();
+    match parser.validate_config() {
+        Ok(()) => (),
+        Err(msg) => panic!("{}", msg)
+    };
     parser
 
 }

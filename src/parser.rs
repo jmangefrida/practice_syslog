@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
 use serde_regex;
 use regex::Regex;
-
+use serde_json::{json, Value};
 
 //use crate::log_event;
 
@@ -17,17 +17,27 @@ use regex::Regex;
 pub struct ParserCollection {
     pub name: String,
     pub base: String,
-    pub parsers: Vec<Parser>
+    pub parsers: Vec<Parser>,
+    pub value_type: HashMap<String, String>,
 
 }
 
 impl ParserCollection {
-    pub fn parse(self, msg: String) -> HashMap<String, String> {
-        let mut values = HashMap::new();
+    pub fn validate_config(&self) -> Result<(), String> {
+        for parser in &self.parsers {
+            parser.validate_config(&self.value_type)?
+        }
+        
+        Ok(())
+    }
+
+    pub fn parse(&self, msg: String) -> HashMap<String, Value> {
+        let mut values: HashMap<String, Value> = HashMap::new();
+        //let mut json_values = serde_json::from_str("{}").unwrap();
         for parser in &self.parsers {
             if parser.name == self.base {
                 //print!("Running base match-");
-                values.extend(parser.clone().parse(&self, &msg));
+                values.extend(parser.clone().parse(&self, &msg, &self.value_type));
                 break;
             }
         }
@@ -48,10 +58,31 @@ pub struct Parser {
 }
 
 impl Parser {
-    pub fn parse(self, parser_coll:&ParserCollection, msg: &String) -> HashMap<String,String> {
+    pub fn validate_config(&self, value_type: &HashMap<String, String>) -> Result<(), String> {
+        let names = self.expression.capture_names();
+        println!("{:?}", names);
+        for name in names {
+            match name {
+                Some(n) =>{ 
+                    if !value_type.contains_key(n){
+                        return Err("Missing value: ".to_string() + n)
+                    }
+                },
+                None => ()
+            };
+
+
+
+            
+        }
+
+        Ok(())
+    }
+
+    pub fn parse(self, parser_coll:&ParserCollection, msg: &String, value_type: &HashMap<String, String>) -> HashMap<String,Value> {
         //print!("Running match {}", self.name);
         let mut curser: usize = 0;
-        let mut values = HashMap::new();
+        let mut values: HashMap<String, Value> = HashMap::new();
         let mut names = self.expression.capture_names();
         let Some(caps) = self.expression.captures(&msg) else {
             //return log_event::AnalyzedEvent{ event: event, data: values, log_type: log_event::LogType::UNKNOWN}
@@ -63,9 +94,14 @@ impl Parser {
             match names.next().unwrap() {
                 Some(na) => {
                     curser = cap.unwrap().end();
-                    values.insert(na.to_string(), cap.unwrap().as_str().to_string())
+                    let v = match value_type[na].as_str() {
+                        "int" => json!(cap.unwrap().as_str().to_string().parse::<i64>().unwrap()),
+                        "float" => json!(cap.unwrap().as_str().to_string().parse::<f64>().unwrap()),
+                        "string" | &_ => json!(cap.unwrap().as_str().to_string()),
+                    };
+                    values.insert(na.to_string(), v)
                 },
-                None => Some(String::new())
+                None => Some(json!(String::new()))
             };
 
         }
@@ -75,7 +111,7 @@ impl Parser {
                     for parser in &parser_coll.parsers {
                         if parser.name == branch.name {
 
-                            values.extend(parser.clone().parse(parser_coll, &msg[curser..].to_string()));
+                            values.extend(parser.clone().parse(parser_coll, &msg[curser..].to_string(), value_type));
                             return values
                         }
                     }
@@ -91,7 +127,7 @@ impl Parser {
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct Branch {
     value: String,
-    value_type: String,
+    //value_type: String,
     name: String
 }
 

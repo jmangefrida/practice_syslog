@@ -4,7 +4,7 @@ use crate::duration::Duration;
 use scylla::ValueList;
 use std::collections::HashMap;
 //use std::os::unix::process;
-//use serde_json::{Result, Value};
+use serde_json::{Result, Value};
 //use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime};
 //use chrono::format::ParseError;
 //use regex::Regex;
@@ -74,14 +74,24 @@ const MONTHS: [&str; 12] = [
 
 
 
-#[derive(Debug, ValueList)]
 pub struct LogEvent {
     pub id: Uuid,
     pub ingest_time: Duration,
     pub source: String,
-    pub tag: String,
+    pub tags: Vec<String>,
     pub msg: String,
-    pub data: HashMap<String, String>,
+    pub data: HashMap<String, Value>,
+    pub log_type: String
+
+}
+#[derive(Debug, ValueList)]
+pub struct DbEvent {
+    pub id: Uuid,
+    pub ingest_time: Duration,
+    pub source: String,
+    pub tags: Vec<String>,
+    pub msg: String,
+    pub original: String,
     pub log_type: String
 
 }

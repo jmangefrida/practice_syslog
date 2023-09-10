@@ -21,9 +21,9 @@ static CREATE_LOG_TABLE_QUERY: &str = r#"
         id UUID,
         ingest_time timestamp,
         source text,
-        tag text,
+        tags list<text>,
         msg TEXT,
-        data map<text, text>,
+        original text,
         log_type text,
         PRIMARY KEY(id, ingest_time, source, tag)
 
@@ -32,7 +32,7 @@ static CREATE_LOG_TABLE_QUERY: &str = r#"
 
 
 static ADD_EVENT_QUERY: &str = r#"
-    INSERT INTO logs.event (id, ingest_time, source, tag, msg, data, log_type)
+    INSERT INTO logs.event (id, ingest_time, source, tag, msg, original, log_type)
     VALUES (?, ?, ?, ?, ?, ?, ?);
 "#;
 
@@ -62,7 +62,7 @@ pub async fn create_table_log(session: &Session) -> Result<()> {
     .map_err(From::from)
 }
 
-pub async fn add_event(session: &Session, msg: &log_event::LogEvent) -> Result<()> {
+pub async fn add_event(session: &Session, msg: &log_event::DbEvent) -> Result<()> {
     session
     .query(ADD_EVENT_QUERY, msg)
     .await

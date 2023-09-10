@@ -1,16 +1,58 @@
 {
     "name": "OPENSENSE",
     "base": "SYSLOG_OPNSENSE",
+    "value_type": {
+        "PRI": "int", 
+        "DATETIME": "string", 
+        "HOSTNAME": "string", 
+        "PROCESS": "string", 
+        "PROCESS_ID": "int", 
+        "SEQUENCE_ID": "int",
+        "ACTION": "string",
+        "MSG": "string",
+        "REQUEST_TIMESTAMP": "int",
+        "PROCESSING_TIME": "int", 
+        "CLIENT_IP": "string", 
+        "CACHE_RESULT": "string", 
+        "RESPONSE_LENGTH": "int", 
+        "REQUEST_METHOD": "string", 
+        "REQUEST_URL": "string", 
+        "USER": "string", 
+        "PROXY_ROUTE": "string", 
+        "RESPONSE_CONTENT_TYPE": "string",
+        "GUID": "string",
+        "UNKNOWN_1": "int", 
+        "RULE": "string", 
+        "INPUT_INTERFACE": "string", 
+        "REASON": "string", 
+        "DIRECTION": "string", 
+        "IP_VERSION": "int",
+        "UNKNOWN_2": "string", 
+        "UNKNOWN_3": "string", 
+        "TTL": "int", 
+        "SIZE_1": "int", 
+        "UNKNOWN_4": "int", 
+        "UNKNOWN_5": "string", 
+        "PROTOCOL_ID": "int", 
+        "PROTOCOL": "string", 
+        "SIZE": "int", 
+        "SRC_IP": "string", 
+        "DST_IP": "string", 
+        "SIZE_2": "int", 
+        "DST_PORT": "int", 
+        "SRC_PORT": "int"
+    },
+
     "parsers": [
         {
             "name": "SYSLOG_OPNSENSE",
-            "expression": "<(?P<PRI>\\d+)>1 (?P<DATETIME>\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(-\\d{2}:\\d{2})?) (?P<HOSTNAME>\\S+) \\(?(?P<PROCESS>\\w+(\\.\\w+)?-?\\d?)\\)? (?P<PROCESS_ID>\\d+) - \\[meta sequenceId=\\W(?P<SEQUENCED_ID>\\d+)\\W]",
+            "expression": "<(?P<PRI>\\d+)>1 (?P<DATETIME>\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}(-\\d{2}:\\d{2})?) (?P<HOSTNAME>\\S+) \\(?(?P<PROCESS>\\w+(\\.\\w+)?-?\\d?)\\)? (?P<PROCESS_ID>\\d+) - \\[meta sequenceId=\\W(?P<SEQUENCE_ID>\\d+)\\W]",
             "decision": "PROCESS",
             "branches": [
-                {"value": "unbound", "value_type": "string", "name": "SYSLOG_OPNSENSE_UNBOUND"},
-                {"value": "squid", "value_type": "string", "name": "SYSLOG_OPNSENSE_SQUID"},
-                {"value": "filterlog", "value_type": "string", "name": "SYSLOG_OPNSENSE_FILTERLOG"},
-                {"value": "configd.py", "value_type": "string", "name": "SYSLOG_OPNSENSE_CONFIG"}
+                {"value": "unbound", "name": "SYSLOG_OPNSENSE_UNBOUND"},
+                {"value": "squid", "name": "SYSLOG_OPNSENSE_SQUID"},
+                {"value": "filterlog", "name": "SYSLOG_OPNSENSE_FILTERLOG"},
+                {"value": "configd.py", "name": "SYSLOG_OPNSENSE_CONFIG"}
 
             ]
         },
@@ -29,14 +71,14 @@
         },
         {
             "name": "SYSLOG_OPNSENSE_CONFIG",
-            "expression": "\\[(?P<GUID>.+)\\](?P<MGS>.+)",
+            "expression": "\\[(?P<GUID>.+)\\](?P<MSG>.+)",
             "decision": "",
             "branches": []
 
         },
         {
             "name": "SYSLOG_OPNSENSE_FILTERLOG",
-            "expression": "(?P<UNKOWN_1>\\d+),,,(?P<RULE>\\w+),(?P<INPUT_INTERFACE>\\w+),(?P<REASON>\\w+),(?P<ACTION>\\w+),(?P<DIRECTION>\\w+),(?P<IP_VERSION>4|6)",
+            "expression": "(?P<UNKNOWN_1>\\d+),,,(?P<RULE>\\w+),(?P<INPUT_INTERFACE>\\w+),(?P<REASON>\\w+),(?P<ACTION>\\w+),(?P<DIRECTION>\\w+),(?P<IP_VERSION>4|6)",
             "decision": "IP_VERSION",
             "branches": [
                 {"value": "4", "value_type": "int", "name": "SYSLOG_OPNSENSE_FILTERLOG_4"}
@@ -45,7 +87,7 @@
         },
         {
             "name": "SYSLOG_OPNSENSE_FILTERLOG_4",
-            "expression": ",(?P<UNKNOWN_2>\\w+),(P?<UNKNOWN_3>\\w?)?,(?P<TTL>\\d+),(?P<SIZE_1>\\d+),(?P<UNKNOWN_3>\\d+),(?P<UNKNOWN_4>\\w+),(?P<PROTOCOL_ID>\\d+),(?P<PROTOCOL>\\w+),(?P<SIZE>\\d+),(?P<SRC_IP>\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}),(?P<DST_IP>\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}),(?P<SIZE_2>\\d+),(?P<DST_PORT>\\d+),(?P<SRC_PORT>\\d+)74",
+            "expression": ",(?P<UNKNOWN_2>\\w+),(P?<UNKNOWN_3>\\w?)?,(?P<TTL>\\d+),(?P<SIZE_1>\\d+),(?P<UNKNOWN_4>\\d+),(?P<UNKNOWN_5>\\w+),(?P<PROTOCOL_ID>\\d+),(?P<PROTOCOL>\\w+),(?P<SIZE>\\d+),(?P<SRC_IP>\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}),(?P<DST_IP>\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}),(?P<SIZE_2>\\d+),(?P<DST_PORT>\\d+),(?P<SRC_PORT>\\d+)74",
             "decision": "",
             "branches":[]
         }
