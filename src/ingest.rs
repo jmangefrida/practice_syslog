@@ -8,6 +8,7 @@ use crate::pool;
 //use crate::filter;
 //use std::time;
 use crate::log_event;
+use syn::buffer;
 use uuid::Uuid;
 use crate::duration::Duration;
 use tokio::runtime::Runtime;
@@ -28,12 +29,14 @@ use serde_json::{json, Value};
 
 #[derive(Clone)]
 pub struct SyslogListener {
-    pub db_uri: String,
+    //pub db_uri: String,
     pub sock_uri: String,
     pub parser: parser::ParserCollection,
     pub tags: Vec<String>,
-    pub sender: mpsc::Sender<Box<HashMap<String, Value>>>,
-    pub threads: usize
+    pub sender: mpsc::Sender<HashMap<String, Value>>,
+    pub threads: usize,
+    //pub ds_sender: mpsc::Sender<Value>
+    pub ds_sender: mpsc::Sender<log_event::DsEvent>
     
 }
 
@@ -42,7 +45,7 @@ impl SyslogListener {
         println!("connecting to IP:{}", self.sock_uri);
         let s = UdpSocket::bind(&self.sock_uri).unwrap();
         let mut buf = [0u8; 2048];
-        let pool = pool::ThreadPool::new(self.threads, &self.db_uri, self.parser, self.sender.clone()).await;
+        let pool = pool::ThreadPool::new(self.threads, self.parser, self.sender.clone(), self.ds_sender).await;
 
         
         loop {
@@ -62,10 +65,12 @@ impl SyslogListener {
 }
 
 pub struct  JSONListner {
-    pub db_uri: String,
+    //pub db_uri: String,
     pub sock_uri: String,
     pub tags: Vec<String>,
-    pub query_sender: mpsc::Sender<Box<HashMap<String, Value >>>
+    pub query_sender: mpsc::Sender<HashMap<String, Value >>,
+    //pub ds_sender: mpsc::Sender<Value>
+    pub ds_sender: mpsc::Sender<log_event::DsEvent>
     //pub threads: usize
 }
 
@@ -85,8 +90,8 @@ impl JSONListner {
         //);
         //let session = Mutex::new(session);
 
-        let session = db::create_session(&self.db_uri).await.expect("Error connecting...");
-        let asession = Arc::new(session);
+        //let session = db::create_session(&self.db_uri).await.expect("Error connecting...");
+        //let asession = Arc::new(session);
         let listener = match TcpListener:: bind(self.sock_uri) {
             Ok(tcplistener) => tcplistener,
             Err(v) => return Err(v.to_string()) 
@@ -94,58 +99,51 @@ impl JSONListner {
 
         for stream in listener.incoming() {
             println!("Incoming Stream");
-            let mut stream = stream.unwrap();
+            let stream = stream.unwrap();
             let tags = self.tags.clone();
-            //let sn = Runtime::new().unwrap().block_on(
-            //    Arc::clone(&session);
-            //).expect("Error cloning session");
-            //let sn = Arc::clone(&session);
-            let db_uri = self.db_uri.clone();
-            //let session = Runtime::new().unwrap().block_on(
-            //    db::create_session(&db_uri)
-            //).expect("Unable to connect to database.");
+            
             let qs = self.query_sender.clone();
-            let sn = Arc::clone(&asession);
-            thread::spawn(move ||{
-                //Runtime::new().unwrap().block_on(
-                //session.refresh_topology()
-                //).expect("bad refresh");
-                let src_address = stream.peer_addr().unwrap();
-                let mut buf_reader = BufReader::new(&mut stream);
-                let mut request: String = "".to_string();
-                //let query = Query::new("PRI = 30".to_owned());
+            let ds_sender = self.ds_sender.clone();
 
-                //let sn = Arc::new(session);
+            thread::spawn(move ||{
+                let src_address = stream.peer_addr().unwrap();
+                let mut handle = stream.take(409600000);
+                let mut buf_reader = BufReader::new(&mut handle);
+                let mut request: String = "".to_string();
+
                 loop {
                     request.clear();
                     if buf_reader.read_line(&mut request).expect("cannot read stream") == 0{
                         println!("breaking");
                         break;
                     }
-                    //println!("{request}");
+                    //let start = time::Instant::now();
 
-                    let event: log_event::DbEvent = log_event::DbEvent { 
-                        id: Uuid::new_v4(),
-                        ingest_time: Duration::seconds(SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64),
-                        source: src_address.to_string(),
-                        tags: tags.clone(),
-                        msg: request.clone(),
-                        original: request.to_string(),
-                        log_type: "json".to_string() };
-    
-                    //let sn = session.lock().unwrap();
+                    let Ok(msg) = serde_json::from_str::<HashMap<String,Value>>(&request) else {
+                        println!("Malformed packet!");
+                        break;
+                    };
+
+
                     
-                    //Runtime::new().unwrap().block_on(
-                    //    db::add_event(&session, &event)
-                    //).expect("Error saving event to DB.");
-                    //println!("{:?}", event);
-                    Runtime::new().unwrap().block_on(
-                        db::add_event(&sn, &event)  
-                    ).unwrap();
-                    let start = time::Instant::now();
-                    qs.send(Box::new(serde_json::from_str(&request).unwrap())).unwrap();
-                    //println!("{}", query.check(serde_json::from_str(&request).unwrap()));
-                    let tduration = start.elapsed();
+                    let event: log_event::DsEvent = log_event::DsEvent { 
+                        id: Uuid::new_v4().to_string(), 
+                        ingest_time: SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_secs() as i64,
+                        source: src_address.to_string(), 
+                        tags: tags.clone(), 
+                        msg: serde_json::from_str(&request).unwrap(), 
+                        original: request.to_string(), 
+                        log_type: "json".to_string() };
+
+                    //let buff = json!(event);
+                    //ds_sender.send(buff).unwrap();
+                    ds_sender.send(event).unwrap();
+
+                    
+                    qs.send(msg).unwrap();
+                    //drop(event);
+                    
+                    //let tduration = start.elapsed();
                     //println!("TCP timing:{:?}", tduration);
                 }
 

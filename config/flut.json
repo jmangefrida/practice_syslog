@@ -1,12 +1,17 @@
 {  
     "ingesters": [
-        {"bind_addr": "192.168.1.50:10514", "parser": "OPENSENSE", "tags":["syslog"], "threads": 8 },
-        {"bind_addr": "192.168.1.50:10515", "parser": "OPENSENSE", "tags":["syslog-2"], "threads": 4 }
+        {"bind_addr": "192.168.1.142:10514", "parser": "OPENSENSE", "tags":["syslog"], "threads": 8, "datastore": "default" },
+        {"bind_addr": "192.168.1.142:10515", "parser": "OPENSENSE", "tags":["syslog-2"], "threads": 4, "datastore": "default" }
     ],
     "db_uri": "192.168.122.129",
     "parsers": ["OPENSENSE"],
+    "datastores": [
+        {"name": "default", "retention": 30}
+    ],
     "queries":[
             ["PRI = 134 AND ACTION = pass AND IP_VERSION=4 AND (HOSTNAME=cerberus.localdomain OR HOSTNAME=cerberus.localdomain)", {"ALERT":"test"}]
-        ]
+        ],
+    "datapath": "./datastore"
+    
     
 }

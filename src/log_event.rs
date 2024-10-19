@@ -8,6 +8,7 @@ use serde_json::{Result, Value};
 //use chrono::{DateTime, NaiveDate, NaiveDateTime, NaiveTime};
 //use chrono::format::ParseError;
 //use regex::Regex;
+use serde::{Serialize, Deserialize};
 
 #[derive(Debug)]
 #[non_exhaustive]
@@ -19,10 +20,10 @@ pub enum LogType {
 }
 
 pub enum Facitlity {
-    KERNEL_MESSAGE = 0,
-    USER_MESSAGE = 1,
-    MAIL_SYSTEM  = 2,
-    SYSTEM_DAEMON = 3,
+    KernelMessage = 0,
+    UserMessage = 1,
+    MailSystem  = 2,
+    SystemDaemon = 3,
     SECURITY = 4,
     INTERNAL_SYSLOG_Msg = 5,
     LINE_PRNT_SUB = 6,
@@ -91,6 +92,18 @@ pub struct DbEvent {
     pub source: String,
     pub tags: Vec<String>,
     pub msg: String,
+    pub original: String,
+    pub log_type: String
+
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct DsEvent {
+    pub id: String,
+    pub ingest_time: i64,
+    pub source: String,
+    pub tags: Vec<String>,
+    pub msg: Value,
     pub original: String,
     pub log_type: String
 

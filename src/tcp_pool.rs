@@ -3,7 +3,7 @@ use scylla::Session;
 use crate::log_event;
 use uuid::Uuid;
 use crate::duration::Duration;
-use crate::result::Result;
+//use crate::result::Result;
 use std::str;
 use std::time::SystemTime;
 use crate::db;

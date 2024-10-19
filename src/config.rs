@@ -5,6 +5,7 @@ use std::fs;
 use serde_json;
 //use serde_json::Value;
 use serde::{Serialize, Deserialize};
+use syn::Data;
 
 use crate::parser::ParserCollection;
 use crate::query;
@@ -16,7 +17,14 @@ pub struct Ingester{
     pub bind_addr: String,
     pub parser: String,
     pub tags: Vec<String>,
-    pub threads: usize
+    pub threads: usize,
+    pub datastore: String
+}
+#[derive(Serialize, Deserialize, Debug, Clone)]
+
+pub struct DataStore {
+    pub name: String,
+    pub retention: u32
 }
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
@@ -24,7 +32,9 @@ pub struct Config {
     pub db_uri: String,
     pub ingesters: Vec<Ingester>,
     pub parsers: Vec<String>,
-    pub queries: Vec<(String, query::ACTION)>
+    pub datastores: Vec<DataStore>,
+    pub queries: Vec<(String, query::ACTION)>,
+    pub datapath: String,
 
 }
  impl Config {
